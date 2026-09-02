@@ -81,6 +81,17 @@ Production refuses to fall back to an in-memory database, so missing database co
 | `npm run dev` | Start the server with Nodemon |
 | `npm run seed` | Create the admin and missing sample products |
 | `npm run check` | Run syntax checks across backend JavaScript |
+| `npm run ai:panel -- "..."` | Ask the configured AI providers for parallel opinions |
+
+## AI panel
+
+The optional AI panel sends one prompt to the configured ChatGPT, Claude, and Gemini APIs in parallel. Add provider keys locally to `.env` using `.env.example` as a guide, then run:
+
+```bash
+npm run ai:panel -- "Suggest a secure checkout improvement"
+```
+
+Only configured providers are called. Keep prompts focused and never include passwords, API keys, customer data, or private files unless you intentionally accept the providers' data policies.
 
 ## Project layout
 
