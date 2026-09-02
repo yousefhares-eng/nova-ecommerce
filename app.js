@@ -17,6 +17,7 @@ const orderRoutes = require('./routes/orders');
 const adminRoutes = require('./routes/admin');
 const contactRoutes = require('./routes/contact');
 const devController = require('./controllers/devController');
+const { productUploadDir } = require('./utils/storage');
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use('/css', express.static(path.join(publicPath, 'css')));
 app.use('/js', express.static(path.join(publicPath, 'js')));
 app.use('/images', express.static(path.join(publicPath, 'images')));
 app.use('/uploads', express.static(path.join(publicPath, 'uploads')));
+app.use('/uploads/products', express.static(productUploadDir));
 
 // API routes
 app.use('/api/auth', authRoutes);

@@ -61,6 +61,7 @@ Copy `.env.example` to `.env` and configure:
 | `JWT_SECRET` | Strong secret used to sign authentication tokens |
 | `PORT` | HTTP port, default `3000` |
 | `BASE_URL` | Public base URL used for uploaded image URLs |
+| `NOVA_DATA_DIR` | Local data directory for product uploads; defaults to `D:\NOVA-data` when available |
 | `ADMIN_EMAIL` | Seed admin email |
 | `ADMIN_PASSWORD` | Seed admin password |
 | `ADMIN_NAME` | Seed admin display name |
@@ -72,6 +73,8 @@ Never commit `.env`. It is excluded by `.gitignore`.
 The repository includes [render.yaml](render.yaml) for Render. Create a MongoDB Atlas database, connect the GitHub repository to Render, and set `MONGODB_URI`, `JWT_SECRET`, `BASE_URL`, and `ADMIN_PASSWORD` as Render environment variables. After the first deploy, run `npm run seed` once from the service shell.
 
 Production refuses to fall back to an in-memory database, so missing database configuration fails fast instead of silently losing orders.
+
+Local uploads are stored outside the project on `D:\NOVA-data\uploads\products` when the D: drive exists. To keep MongoDB data off C:, start local MongoDB with `--dbpath D:\NOVA-data\mongodb`.
 
 ## Scripts
 

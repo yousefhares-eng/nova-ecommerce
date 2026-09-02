@@ -10,7 +10,7 @@ const path = require('path');
 const fs = require('fs');
 const { normalizeProduct } = require('../utils/normalizeProduct');
 const { restoreStock } = require('./orderController');
-const uploadDir = path.join(__dirname, '..', 'public', 'uploads', 'products');
+const { productUploadDir: uploadDir } = require('../utils/storage');
 
 /**
  * GET /api/admin/dashboard
