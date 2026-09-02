@@ -23,7 +23,7 @@ const app = express();
 // Security
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(mongoSanitize());
-app.use(
+app.use('/api',
   rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 200,

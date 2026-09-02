@@ -40,6 +40,11 @@ const connectDB = async () => {
           } catch (localErr) {
             console.error('Fallback to local MongoDB failed:', localErr.message);
           }
+
+            if (process.env.NODE_ENV === 'production') {
+              console.error('Production database is unavailable; refusing to use an in-memory database.');
+              process.exit(1);
+            }
         }
 
         // If local fallback failed, try an in-memory MongoDB (dev only)

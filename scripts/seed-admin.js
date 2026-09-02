@@ -15,6 +15,11 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@nova.style';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 const ADMIN_NAME = process.env.ADMIN_NAME || 'Admin';
 
+if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_PASSWORD) {
+  console.error('Set ADMIN_PASSWORD before seeding an admin in production.');
+  process.exit(1);
+}
+
 const legacySampleProducts = [
   {
     name: 'NOVA Essential Hoodie',
