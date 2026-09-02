@@ -1,6 +1,7 @@
 const Product = require('../models/Product');
+const sampleProducts = require('../utils/sampleProducts');
 
-const sampleProducts = [
+const legacySampleProducts = [
   {
     name: 'NOVA Classic Tee',
     description: 'Premium cotton t-shirt with classic fit.',
@@ -105,13 +106,15 @@ const sampleProducts = [
 
 exports.seedProducts = async (req, res) => {
   try {
-    const existing = await Product.find().limit(1);
-    if (existing && existing.length > 0) {
-      return res.json({ success: true, message: 'Products already exist in DB, seed skipped.' });
-    }
-
-    const created = await Product.insertMany(sampleProducts);
-    res.json({ success: true, created: created.length });
+    const operations = sampleProducts.map((product) => ({
+      updateOne: {
+        filter: { name: product.name },
+        update: { $set: product },
+        upsert: true,
+      },
+    }));
+    const result = await Product.bulkWrite(operations);
+    res.json({ success: true, created: result.upsertedCount || 0, updated: result.modifiedCount || 0 });
   } catch (err) {
     console.error('Seed products error:', err);
     res.status(500).json({ success: false, message: err.message });

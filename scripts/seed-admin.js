@@ -9,12 +9,13 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const Product = require('../models/Product');
 const connectDB = require('../config/db');
+const sampleProducts = require('../utils/sampleProducts');
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@nova.style';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 const ADMIN_NAME = process.env.ADMIN_NAME || 'Admin';
 
-const SAMPLE_PRODUCTS = [
+const legacySampleProducts = [
   {
     name: 'NOVA Essential Hoodie',
     description: 'Heavyweight cotton hoodie with a relaxed fit and embroidered NOVA mark.',
@@ -132,14 +133,14 @@ async function run() {
     }
 
     let createdProducts = 0;
-    for (const productData of SAMPLE_PRODUCTS) {
+    for (const productData of sampleProducts) {
       const productExists = await Product.exists({ name: productData.name });
       if (!productExists) {
         await Product.create(productData);
         createdProducts += 1;
       }
     }
-    console.log(`Sample products ready: ${createdProducts} created, ${SAMPLE_PRODUCTS.length - createdProducts} already existed.`);
+    console.log(`Sample products ready: ${createdProducts} created, ${sampleProducts.length - createdProducts} already existed.`);
   } catch (err) {
     console.error('Seed error:', err);
     process.exit(1);
