@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Products – NOVA</title>
+  <link rel="stylesheet" href="/css/main.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="/" class="logo">NOVA</a>
+      <nav class="nav-links">
+        <a href="/">Home</a>
+        <a href="/shop">Shop</a>
+        <a href="/admin">Admin</a>
+      </nav>
+      <div class="header-actions">
+        <a href="/" class="btn btn-ghost btn-sm">View store</a>
+        <button type="button" class="btn btn-ghost btn-sm" id="nav-logout">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <h3>Admin</h3>
+      <nav>
+        <a href="/admin">Dashboard</a>
+        <a href="/admin/products" class="active">Products</a>
+        <a href="/admin/orders">Orders</a>
+      </nav>
+    </aside>
+    <main class="admin-main">
+      <h1>Products</h1>
+      <div style="margin-bottom: var(--space-4);">
+        <button type="button" class="btn btn-primary" id="btn-add">Add product</button>
+      </div>
+      <div id="admin-error" class="alert alert-error" style="display:none;"></div>
+      <div id="admin-success" class="alert alert-success" style="display:none;"></div>
+      <div id="products-table-wrap"></div>
+
+      <!-- Modal: Add/Edit product -->
+      <div id="product-modal" style="display:none; position:fixed; inset:0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; padding: var(--space-4);">
+        <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto;">
+          <div style="padding: var(--space-6);">
+            <h2 id="modal-title" style="margin-bottom: var(--space-4);">Add product</h2>
+            <form id="product-form">
+              <input type="hidden" name="id" />
+              <div class="form-group">
+                <label>Name *</label>
+                <input type="text" name="name" class="form-control" required />
+              </div>
+              <div class="form-group">
+                <label>Description *</label>
+                <textarea name="description" class="form-control" required rows="3"></textarea>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Price *</label>
+                  <input type="number" name="price" class="form-control" step="0.01" min="0" required />
+                </div>
+                <div class="form-group">
+                  <label>Compare at price</label>
+                  <input type="number" name="compareAtPrice" class="form-control" step="0.01" min="0" placeholder="Optional" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Category</label>
+                <select name="category" class="form-control">
+                  <option value="streetwear">Streetwear</option>
+                  <option value="hoodies">Hoodies</option>
+                  <option value="t-shirts">T-Shirts</option>
+                  <option value="pants">Pants</option>
+                  <option value="accessories">Accessories</option>
+                  <option value="outerwear">Outerwear</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Sizes (comma-separated)</label>
+                  <input type="text" name="sizes" class="form-control" placeholder="S, M, L, XL" />
+                </div>
+                <div class="form-group">
+                  <label>Colors (comma-separated)</label>
+                  <input type="text" name="colors" class="form-control" placeholder="Black, White" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Stock</label>
+                  <input type="number" name="stock" class="form-control" min="0" value="0" />
+                </div>
+                <div class="form-group" style="display: flex; align-items: flex-end; gap: var(--space-4);">
+                  <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
+                    <input type="checkbox" name="featured" /> Featured
+                  </label>
+                  <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
+                    <input type="checkbox" name="active" checked /> Active
+                  </label>
+                </div>
+              </div>
+              <div class="form-group" id="form-images-group">
+                <label>Images</label>
+                <input type="file" name="images" accept="image/*" multiple />
+              </div>
+              <div style="display: flex; gap: var(--space-3); margin-top: var(--space-4);">
+                <button type="submit" class="btn btn-primary" id="btn-save">Save</button>
+                <button type="button" class="btn btn-outline" id="btn-cancel">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/app.js"></script>
+  <script>
+    (function () {
+      const user = typeof getUser === 'function' ? getUser() : null;
+      if (!user || user.role !== 'admin') {
+        window.location.href = '/login?redirect=' + encodeURIComponent('/admin/products');
+        return;
+      }
+      document.getElementById('nav-logout').addEventListener('click', function () { logout(); });
+
+      const modal = document.getElementById('product-modal');
+      const form = document.getElementById('product-form');
+      const errEl = document.getElementById('admin-error');
+      const successEl = document.getElementById('admin-success');
+      const wrap = document.getElementById('products-table-wrap');
+
+      function showErr(msg) {
+        successEl.style.display = 'none';
+        errEl.textContent = msg;
+        errEl.style.display = 'block';
+      }
+      function showSuccess(msg) {
+        errEl.style.display = 'none';
+        successEl.textContent = msg;
+        successEl.style.display = 'block';
+      }
+
+      async function loadProducts() {
+        try {
+          const { data } = await api('/api/admin/products');
+          const products = data.products || [];
+          if (!products.length) {
+            wrap.innerHTML = '<p style="color: var(--text-muted);">No products yet. Add one above.</p>';
+            return;
+          }
+          wrap.innerHTML =
+            '<table class="admin-table">' +
+            '<thead><tr><th>Image</th><th>Name</th><th>Price</th><th>Category</th><th>Stock</th><th>Featured</th><th>Active</th><th></th></tr></thead><tbody>' +
+            products.map(function (p) {
+              const img = (p.images && p.images[0]) || '/images/placeholder.svg';
+              return '<tr><td><img src="' + img + '" alt="" style="width:48px;height:48px;object-fit:cover;border-radius: var(--radius);" /></td><td>' + (p.name || '') + '</td><td>$' + Number(p.price || 0).toFixed(2) + '</td><td>' + (p.category || '') + '</td><td>' + (p.stock || 0) + '</td><td>' + (p.featured ? 'Yes' : '') + '</td><td>' + (p.active !== false ? 'Yes' : 'No') + '</td><td><button type="button" class="btn btn-outline btn-sm edit-btn" data-id="' + p._id + '">Edit</button> <button type="button" class="btn btn-ghost btn-sm delete-btn" data-id="' + p._id + '">Delete</button></td></tr>';
+            }).join('') +
+            '</tbody></table>';
+
+          wrap.querySelectorAll('.edit-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () { openEdit(btn.dataset.id); });
+          });
+          wrap.querySelectorAll('.delete-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () { doDelete(btn.dataset.id); });
+          });
+        } catch (e) {
+          showErr(e.message || 'Failed to load products.');
+        }
+      }
+
+      function openAdd() {
+        document.getElementById('modal-title').textContent = 'Add product';
+        form.reset();
+        form.querySelector('input[name="id"]').value = '';
+        form.querySelector('input[name="active"]').checked = true;
+        modal.style.display = 'flex';
+      }
+
+      async function openEdit(id) {
+        try {
+          const { data } = await api('/api/products/' + id);
+          const p = data.product;
+          document.getElementById('modal-title').textContent = 'Edit product';
+          form.querySelector('input[name="id"]').value = p._id;
+          form.querySelector('input[name="name"]').value = p.name || '';
+          form.querySelector('textarea[name="description"]').value = p.description || '';
+          form.querySelector('input[name="price"]').value = p.price ?? '';
+          form.querySelector('input[name="compareAtPrice"]').value = p.compareAtPrice ?? '';
+          form.querySelector('select[name="category"]').value = p.category || 'streetwear';
+          form.querySelector('input[name="sizes"]').value = (p.sizes || []).join(', ');
+          form.querySelector('input[name="colors"]').value = (p.colors || []).join(', ');
+          form.querySelector('input[name="stock"]').value = p.stock ?? 0;
+          form.querySelector('input[name="featured"]').checked = !!p.featured;
+          form.querySelector('input[name="active"]').checked = p.active !== false;
+          modal.style.display = 'flex';
+        } catch (e) {
+          showErr(e.message || 'Failed to load product.');
+        }
+      }
+
+      function closeModal() {
+        modal.style.display = 'none';
+      }
+
+      document.getElementById('btn-add').addEventListener('click', openAdd);
+      document.getElementById('btn-cancel').addEventListener('click', closeModal);
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const id = form.querySelector('input[name="id"]').value;
+        const fd = new FormData();
+        fd.append('name', form.querySelector('input[name="name"]').value);
+        fd.append('description', form.querySelector('textarea[name="description"]').value);
+        fd.append('price', form.querySelector('input[name="price"]').value);
+        fd.append('compareAtPrice', form.querySelector('input[name="compareAtPrice"]').value);
+        fd.append('category', form.querySelector('select[name="category"]').value);
+        fd.append('sizes', form.querySelector('input[name="sizes"]').value);
+        fd.append('colors', form.querySelector('input[name="colors"]').value);
+        fd.append('stock', form.querySelector('input[name="stock"]').value);
+        fd.append('featured', form.querySelector('input[name="featured"]').checked ? '1' : '0');
+        fd.append('active', form.querySelector('input[name="active"]').checked ? '1' : '0');
+        const files = form.querySelector('input[name="images"]').files;
+        for (let i = 0; i < files.length; i++) fd.append('images', files[i]);
+
+        const btn = document.getElementById('btn-save');
+        btn.disabled = true;
+        try {
+          if (id) {
+            await apiForm('/api/admin/products/' + id, fd, 'PUT');
+            showSuccess('Product updated.');
+          } else {
+            await apiForm('/api/admin/products', fd, 'POST');
+            showSuccess('Product created.');
+          }
+          closeModal();
+          loadProducts();
+        } catch (err) {
+          showErr(err.message || 'Failed to save product.');
+        }
+        btn.disabled = false;
+      });
+
+      async function doDelete(id) {
+        if (!confirm('Delete this product?')) return;
+        try {
+          await api('/api/admin/products/' + id, { method: 'DELETE' });
+          showSuccess('Product deleted.');
+          loadProducts();
+        } catch (e) {
+          showErr(e.message || 'Failed to delete.');
+        }
+      }
+
+      loadProducts();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NOVA – Premium Modern Streetwear</title>
+  <link rel="stylesheet" href="/css/main.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="/" class="logo">NOVA</a>
+      <nav class="nav-links">
+        <a href="/">Home</a>
+        <a href="/shop">Shop</a>
+        <a href="/contact">Contact</a>
+        <a href="/admin" id="nav-admin" style="display:none">Admin</a>
+      </nav>
+      <div class="header-actions">
+        <a href="/cart" class="cart-link">
+          Cart <span id="cart-count" class="cart-count" style="display:none">0</span>
+        </a>
+        <a href="/login" id="nav-login">Login</a>
+        <a href="/register" id="nav-register">Register</a>
+        <button type="button" class="btn btn-ghost btn-sm" id="nav-logout" style="display:none">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-content">
+        <h1>Premium Modern Streetwear</h1>
+        <p>Elevate your style with NOVA – crafted for those who move differently.</p>
+        <a href="/shop" class="btn btn-primary">Shop Now</a>
+      </div>
+    </section>
+
+    <section class="featured-section">
+      <div class="container">
+        <h2 class="section-title">Featured</h2>
+        <div id="featured-grid" class="product-grid"></div>
+        <div id="featured-empty" style="display:none; text-align:center; color: var(--text-muted); padding: var(--space-12) 0;">
+          No featured products yet. Check back soon.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-col">
+        <h4>Shop</h4>
+        <a href="/shop">All Products</a>
+        <a href="/shop?category=hoodies">Hoodies</a>
+        <a href="/shop?category=t-shirts">T-Shirts</a>
+        <a href="/shop?category=accessories">Accessories</a>
+      </div>
+      <div class="footer-col">
+        <h4>Support</h4>
+        <a href="/contact">Contact</a>
+        <p>support@nova.style</p>
+      </div>
+      <div class="footer-col">
+        <h4>NOVA</h4>
+        <p>Premium modern streetwear.</p>
+      </div>
+    </div>
+    <div class="footer-bottom">&copy; 2025 NOVA. All rights reserved.</div>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/cart.js"></script>
+  <script src="/js/app.js"></script>
+  <script>
+    (function () {
+      async function loadFeatured() {
+        try {
+          const { data } = await api('/api/products/featured');
+          const grid = document.getElementById('featured-grid');
+          const empty = document.getElementById('featured-empty');
+          const products = data.products || [];
+          if (!products.length) {
+            grid.innerHTML = '';
+            empty.style.display = 'block';
+            return;
+          }
+          empty.style.display = 'none';
+          grid.innerHTML = products.map(function (p) {
+            const img = (p.images && p.images[0]) || '/images/placeholder.svg';
+            const price = '$' + Number(p.price).toFixed(2);
+            const meta = [p.category, [p.sizes, p.colors].filter(Boolean).join(' · ')].filter(Boolean).join(' · ');
+            return (
+              '<a href="/product?id=' + p._id + '" class="card product-card">' +
+              '  <div class="card-image"><img src="' + img + '" alt="" loading="lazy" /></div>' +
+              '  <div class="card-body">' +
+              '    <h3 class="card-title">' + (p.name || '') + '</h3>' +
+              '    <div class="card-meta">' + (meta || '') + '</div>' +
+              '    <div class="card-price">' + price + '</div>' +
+              '  </div>' +
+              '</a>'
+            );
+          }).join('');
+        } catch (e) {
+          document.getElementById('featured-empty').style.display = 'block';
+          document.getElementById('featured-empty').textContent = 'Unable to load featured products.';
+        }
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadFeatured);
+      else loadFeatured();
+    })();
+  </script>
+</body>
+</html>

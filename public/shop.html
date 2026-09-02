@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shop – NOVA</title>
+  <link rel="stylesheet" href="/css/main.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="/" class="logo">NOVA</a>
+      <nav class="nav-links">
+        <a href="/">Home</a>
+        <a href="/shop" class="active">Shop</a>
+        <a href="/contact">Contact</a>
+        <a href="/admin" id="nav-admin" style="display:none">Admin</a>
+      </nav>
+      <div class="header-actions">
+        <a href="/cart" class="cart-link">Cart <span id="cart-count" class="cart-count" style="display:none">0</span></a>
+        <a href="/login" id="nav-login">Login</a>
+        <a href="/register" id="nav-register">Register</a>
+        <button type="button" class="btn btn-ghost btn-sm" id="nav-logout" style="display:none">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="shop-header">
+        <h1>Shop</h1>
+        <p style="color: var(--text-muted);">Premium streetwear for every moment.</p>
+        <div class="shop-filters">
+          <select id="filter-category">
+            <option value="">All categories</option>
+            <option value="streetwear">Streetwear</option>
+            <option value="hoodies">Hoodies</option>
+            <option value="t-shirts">T-Shirts</option>
+            <option value="pants">Pants</option>
+            <option value="accessories">Accessories</option>
+            <option value="outerwear">Outerwear</option>
+          </select>
+          <input type="text" id="filter-search" placeholder="Search..." class="form-control" style="max-width: 200px; display: inline-block;" />
+          <button type="button" class="btn btn-outline btn-sm" id="filter-apply">Apply</button>
+        </div>
+      </div>
+      <div id="shop-grid" class="product-grid"></div>
+      <div id="shop-empty" style="display:none; text-align:center; color: var(--text-muted); padding: var(--space-12) 0;">No products found.</div>
+      <div id="shop-loading" style="text-align:center; padding: var(--space-8); color: var(--text-muted);">Loading…</div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-col"><h4>Shop</h4><a href="/shop">All Products</a><a href="/contact">Contact</a></div>
+      <div class="footer-col"><h4>Support</h4><a href="/contact">Contact</a><p>support@nova.style</p></div>
+      <div class="footer-col"><h4>NOVA</h4><p>Premium modern streetwear.</p></div>
+    </div>
+    <div class="footer-bottom">&copy; 2025 NOVA.</div>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/cart.js"></script>
+  <script src="/js/app.js"></script>
+  <script>
+    (function () {
+      function qs(s) { return document.querySelector(s); }
+      function qsAll(s) { return document.querySelectorAll(s); }
+      function params() {
+        const u = new URL(location.href);
+        return { category: u.searchParams.get('category') || '', search: u.searchParams.get('search') || '' };
+      }
+      function applyParams() {
+        const p = params();
+        const cat = qs('#filter-category');
+        const search = qs('#filter-search');
+        if (cat) cat.value = p.category;
+        if (search) search.value = p.search;
+      }
+      function updateUrl() {
+        const cat = (qs('#filter-category') || {}).value || '';
+        const search = (qs('#filter-search') || {}).value || '';
+        const sp = new URLSearchParams();
+        if (cat) sp.set('category', cat);
+        if (search) sp.set('search', search);
+        const q = sp.toString();
+        history.replaceState(null, '', (q ? '?' + q : '/shop'));
+      }
+      async function load() {
+        const p = params();
+        let url = '/api/products?limit=50';
+        if (p.category) url += '&category=' + encodeURIComponent(p.category);
+        if (p.search) url += '&search=' + encodeURIComponent(p.search);
+        qs('#shop-loading').style.display = 'block';
+        qs('#shop-empty').style.display = 'none';
+        qs('#shop-grid').innerHTML = '';
+        try {
+          const { data } = await api(url);
+          const products = data.products || [];
+          qs('#shop-loading').style.display = 'none';
+          if (!products.length) {
+            qs('#shop-empty').style.display = 'block';
+            return;
+          }
+          qs('#shop-grid').innerHTML = products.map(function (r) {
+            const img = (r.images && r.images[0]) || '/images/placeholder.svg';
+            const meta = [r.category, [r.sizes, r.colors].filter(Boolean).join(' · ')].filter(Boolean).join(' · ');
+            return (
+              '<a href="/product?id=' + r._id + '" class="card product-card">' +
+              '  <div class="card-image"><img src="' + img + '" alt="" loading="lazy" /></div>' +
+              '  <div class="card-body">' +
+              '    <h3 class="card-title">' + (r.name || '') + '</h3>' +
+              '    <div class="card-meta">' + (meta || '') + '</div>' +
+              '    <div class="card-price">' + (r.compareAtPrice ? '<del>$' + Number(r.compareAtPrice).toFixed(2) + '</del> ' : '') + '$' + Number(r.price).toFixed(2) + '</div>' +
+              '  </div>' +
+              '</a>'
+            );
+          }).join('');
+        } catch (e) {
+          qs('#shop-loading').style.display = 'none';
+          qs('#shop-empty').style.display = 'block';
+          qs('#shop-empty').textContent = 'Failed to load products.';
+        }
+      }
+      applyParams();
+      load();
+      qs('#filter-apply').addEventListener('click', function () {
+        updateUrl();
+        load();
+      });
+      qs('#filter-category').addEventListener('change', function () { updateUrl(); load(); });
+      qs('#filter-search').addEventListener('keydown', function (e) { if (e.key === 'Enter') { updateUrl(); load(); } });
+    })();
+  </script>
+</body>
+</html>
