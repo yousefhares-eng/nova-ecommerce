@@ -1,110 +1,114 @@
-# NOVA – Premium Streetwear E-commerce
+# NOVA
 
-Full-stack e-commerce platform for modern streetwear: shop, cart, checkout, user accounts, and admin panel.
+> A polished streetwear storefront built for browsing, buying, and managing a modern product catalog.
 
-## Tech stack
+[![CI](https://github.com/yousefhares-eng/nova-ecommerce/actions/workflows/ci.yml/badge.svg)](https://github.com/yousefhares-eng/nova-ecommerce/actions/workflows/ci.yml)
+[![Node.js](https://img.shields.io/badge/Node.js-20%2B-3c873a?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-- **Backend:** Node.js, Express, MongoDB (Mongoose)
-- **Frontend:** HTML, CSS, vanilla JavaScript
-- **Auth:** JWT + bcrypt
-- **Security:** Helmet, rate limiting, input validation, mongo sanitization
+NOVA is a full-stack e-commerce experience for premium streetwear. It includes a responsive storefront, product discovery, cart and guest checkout, account authentication, payment-method selection, and a protected admin workspace.
 
-## Features
+## Highlights
 
-- Product catalog with search, categories, and featured items
-- Shopping cart (localStorage)
-- Guest and logged-in checkout
-- Stock validation on order placement
-- Admin dashboard: products CRUD, image upload, order management
-- Responsive dark UI
+- Responsive storefront with search, category filters, featured products, and product galleries.
+- Interactive color swatches that switch the product image and preserve the selected variant in the cart.
+- Cart and checkout flow with stock validation, shipping calculation, and order creation.
+- Payment UI for Visa/card, Fawry, and Vodafone Cash. Payment processing is intentionally demo-only.
+- JWT authentication with protected admin routes and bcrypt password hashing.
+- Admin dashboard for products, image uploads, and order status management.
+- Helmet, Mongo sanitization, scoped API rate limiting, validation, and upload restrictions.
+
+## Stack
+
+| Layer | Technology |
+| --- | --- |
+| Server | Node.js, Express 4 |
+| Database | MongoDB, Mongoose |
+| Frontend | HTML, CSS, vanilla JavaScript |
+| Authentication | JWT, bcryptjs |
+| Uploads | Multer |
+| Validation | express-validator |
+| Hosting | Render-ready via `render.yaml` |
 
 ## Quick start
 
-### 1. Install dependencies
+### Requirements
+
+- Node.js 20 or newer
+- MongoDB, or a MongoDB Atlas connection string
+
+### Install and run
 
 ```bash
 npm install
-```
-
-### 2. Configure environment
-
-Copy `.env.example` to `.env` and adjust values:
-
-```bash
 copy .env.example .env
-```
-
-| Variable | Description |
-|----------|-------------|
-| `MONGODB_URI` | MongoDB connection string |
-| `JWT_SECRET` | Secret for signing JWT tokens (use a strong random string in production) |
-| `PORT` | Server port (default `3000`) |
-| `BASE_URL` | Public URL for uploaded images |
-| `ADMIN_EMAIL` | Admin email for seed script (optional) |
-| `ADMIN_PASSWORD` | Admin password for seed script (optional) |
-
-### 3. Seed admin user and sample products
-
-```bash
 npm run seed
-```
-
-Default credentials (if not set in `.env`): `admin@nova.style` / `admin123`
-
-### 4. Run the server
-
-```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Open `http://localhost:3000`.
 
-### Development without MongoDB
+Default development admin credentials are `admin@nova.style` / `admin123`. Change them in `.env` before using a shared or production environment.
 
-If MongoDB is not running, the app will try local MongoDB, then fall back to an in-memory database automatically.
+## Environment
 
-## Deploy on Render
+Copy `.env.example` to `.env` and configure:
 
-1. Push this project to a GitHub repository.
-2. Create a MongoDB Atlas database and copy its connection string.
-3. In Render, choose **New + > Blueprint** and select the repository. Render will use `render.yaml`.
-4. Set `MONGODB_URI`, `BASE_URL` (the deployed Render URL), and a strong `ADMIN_PASSWORD` in the Render environment settings.
-5. After the first deploy, run `npm run seed` from the Render Shell to create the admin and sample products.
+| Variable | Purpose |
+| --- | --- |
+| `MONGODB_URI` | MongoDB or MongoDB Atlas connection string |
+| `JWT_SECRET` | Strong secret used to sign authentication tokens |
+| `PORT` | HTTP port, default `3000` |
+| `BASE_URL` | Public base URL used for uploaded image URLs |
+| `ADMIN_EMAIL` | Seed admin email |
+| `ADMIN_PASSWORD` | Seed admin password |
+| `ADMIN_NAME` | Seed admin display name |
 
-Never upload `.env` to GitHub. It is ignored by `.gitignore`.
+Never commit `.env`. It is excluded by `.gitignore`.
+
+## Deployment
+
+The repository includes [render.yaml](render.yaml) for Render. Create a MongoDB Atlas database, connect the GitHub repository to Render, and set `MONGODB_URI`, `JWT_SECRET`, `BASE_URL`, and `ADMIN_PASSWORD` as Render environment variables. After the first deploy, run `npm run seed` once from the service shell.
+
+Production refuses to fall back to an in-memory database, so missing database configuration fails fast instead of silently losing orders.
 
 ## Scripts
 
 | Command | Description |
-|---------|-------------|
-| `npm start` | Start production server |
-| `npm run dev` | Start with auto-reload (nodemon) |
-| `npm run seed` | Create the admin user if needed and add sample products if they do not exist |
+| --- | --- |
+| `npm start` | Start the production server |
+| `npm run dev` | Start the server with Nodemon |
+| `npm run seed` | Create the admin and missing sample products |
+| `npm run check` | Run syntax checks across backend JavaScript |
 
-## Project structure
+## Project layout
 
+```text
+app.js              Express app and middleware
+server.js           Database connection and server entry point
+config/              Database configuration
+controllers/        API controllers
+middleware/         Authentication, validation, and uploads
+models/              Mongoose models
+public/              Storefront, admin pages, styles, and client scripts
+routes/              API route definitions
+scripts/             Seed utilities
+utils/               Shared sample data and product helpers
 ```
-├── app.js              # Express app & routes
-├── server.js           # Entry point
-├── config/db.js        # MongoDB connection
-├── controllers/        # Route handlers
-├── middleware/         # Auth, upload, validation
-├── models/             # Mongoose schemas
-├── routes/             # API routes
-├── public/             # Frontend (HTML, CSS, JS)
-├── scripts/            # Seed scripts
-└── utils/              # Shared helpers
-```
 
-## API overview
+## API surface
 
-| Endpoint | Description |
-|----------|-------------|
-| `POST /api/auth/register` | Register user |
-| `POST /api/auth/login` | Login |
-| `GET /api/products` | List products |
-| `POST /api/orders` | Place order |
-| `GET /api/admin/*` | Admin routes (requires admin JWT) |
+- `GET /api/products` - list and filter active products
+- `GET /api/products/:id` - retrieve one product
+- `POST /api/orders` - create a guest or authenticated order
+- `POST /api/auth/register` - create an account
+- `POST /api/auth/login` - authenticate a user
+- `GET /api/admin/*` - protected admin operations
+
+## Security notes
+
+This project is ready for demonstration and further production integration. The checkout payment methods are UI selections only; connect a PCI-compliant payment provider before accepting real card data or money. Use HTTPS, MongoDB Atlas network restrictions, strong secrets, and persistent image storage in production.
 
 ## License
 
